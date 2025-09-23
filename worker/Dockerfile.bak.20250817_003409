@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH="$PATH:/home/app/.local/bin"  # HOME_APP_LOCAL PYTHONUNBUFFERED=1
+WORKDIR /app
+
+# system deps (ffmpeg/ffprobe + opcjonalnie aubio-tools)
+RUN set -eux; \
+    apt-get update; DEBIAN_FRONTEND=noninteractive \
+    apt-get install -y --no-install-recommends ffmpeg aubio-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+# nie-root user
+RUN set -eux; \
+    groupadd -r app && useradd -r -g app -m app && \
+    mkdir -p /app/tmp && chown -R app:app /app
+USER app
+
+# skrypty z pip --user (uvicorn/celery) do PATH
+ENV PATH="/home/app/.local/bin:${PATH}"
+
+# python deps
+COPY worker/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# kod
+COPY worker/app /app/app
+
+# start
+CMD ["python","-m","celery","-A","app.celery_app:celery_app","worker","-l","INFO","-Q","vrillsy"]

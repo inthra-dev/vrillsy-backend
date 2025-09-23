@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: vrillsy-backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - ./outputs:/outputs
+    ports:
+      - "8007:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  worker:
+    build: ./worker
+    container_name: vrillsy-worker
+    command: celery -A app.celery_client worker --loglevel=info
+    volumes:
+      - ./worker:/app
+      - ./outputs:/outputs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7
+    container_name: vrillsy-redis
+    ports:
+      - "6379:6379"

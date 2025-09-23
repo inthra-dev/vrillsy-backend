@@ -1,0 +1,34 @@
+{
+  "job_id": "076d3d757fe24129978a2b992842f7ca",
+  "user_id": "u1",
+  "email": "x@example.com",
+  "params": null,
+  "total_bytes": 4718592,
+  "files": {
+    "audio": {
+      "field": "audio",
+      "original": "a.mp3",
+      "saved": "/home/akex/reels-generator/backend/shared/076d3d757fe24129978a2b992842f7ca/audio/a.mp3",
+      "mime": "audio/mpeg",
+      "size": 1572864
+    },
+    "videos": [
+      {
+        "field": "videos",
+        "index": 0,
+        "original": "v1.mp4",
+        "saved": "/home/akex/reels-generator/backend/shared/076d3d757fe24129978a2b992842f7ca/video/v1.mp4",
+        "mime": "video/mp4",
+        "size": 1572864
+      },
+      {
+        "field": "videos",
+        "index": 1,
+        "original": "v2.mp4",
+        "saved": "/home/akex/reels-generator/backend/shared/076d3d757fe24129978a2b992842f7ca/video/v2.mp4",
+        "mime": "video/mp4",
+        "size": 1572864
+      }
+    ]
+  }
+}

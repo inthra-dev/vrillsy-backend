@@ -1,0 +1,13 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# kopiujemy kod workera i skrypt startowy
+COPY worker/ /app/worker/
+
+# ustawiamy skrypt jako entrypoint
+CMD ["sh", "-lc", "./worker/RUN_WORKER.sh"]

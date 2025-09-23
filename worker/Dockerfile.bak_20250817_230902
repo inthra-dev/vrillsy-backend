@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+# Nie ryzykujemy kontynuacji linii w ENV/ARG
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# ffmpeg/ffprobe do analizy wideo/audio
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ffmpeg; \
+    rm -rf /var/lib/apt/lists/*
+
+# Użytkownik nieroocowy
+RUN groupadd -r app && useradd -r -g app -m app
+WORKDIR /app
+RUN mkdir -p /app/tmp && chown -R app:app /app
+
+# Od tego miejsca używamy zwykłego usera, żeby celery/uvicorn siedziało w ~/.local/bin
+USER app
+ENV PATH="/home/app/.local/bin:${PATH}"
+
+# Requirements
+COPY worker/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Kod workera
+COPY worker/app /app/app
+
+# Start Celery
+CMD ["celery","-A","app.celery_app:celery_app","worker","-l","INFO","-Q","vrillsy"]

@@ -1,0 +1,64 @@
+from __future__ import annotations
+from typing import List, Tuple
+from app.celery_app import celery_app
+from app.utils.cut_strategies import make_edl
+import os, json, tempfile, subprocess
+
+def _run(cmd: list[str]) -> None:
+    subprocess.run(cmd, check=True)
+
+def _vf() -> str:
+    return "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,fps=30"
+
+def _beats_from_audio(audio_path: str) -> List[float]:
+    import librosa
+    y, sr = librosa.load(audio_path, mono=True)
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
+    if not beats:
+        return [i * 0.5 for i in range(1, 20)]
+    return librosa.frames_to_time(beats, sr=sr).tolist()
+
+def _cut_to_parts(video_paths: List[str], edl: List[Tuple[float, float]], tmpdir: str) -> List[str]:
+    parts: List[str] = []
+    for i, (s, e) in enumerate(edl):
+        dur = max(0.2, e - s)
+        src = video_paths[i % len(video_paths)]
+        outp = os.path.join(tmpdir, f"part_{i:03d}.mp4")
+        _run([
+            "ffmpeg","-y","-ss",f"{s:.3f}","-t",f"{dur:.3f}","-i",src,
+            "-an","-vf",_vf(),"-r","30",
+            "-c:v","libx264","-preset","veryfast","-crf","18","-movflags","+faststart",
+            outp
+        ])
+        parts.append(outp)
+    return parts
+
+def _concat_with_audio(parts: List[str], audio_path: str, out_path: str) -> None:
+    listfile = os.path.join(os.path.dirname(out_path), "list.txt")
+    with open(listfile,"w") as f:
+        for p in parts:
+            f.write(f"file '{p}'\n")
+    _run([
+        "ffmpeg","-y",
+        "-f","concat","-safe","0","-i",listfile,
+        "-i",audio_path,
+        "-t","10.0","-shortest",
+        "-c:v","libx264","-preset","veryfast","-crf","18","-r","30","-pix_fmt","yuv420p",
+        "-c:a","aac","-b:a","192k",
+        out_path
+    ])
+
+@celery_app.task(name="vrillsy.render_job")
+def render_job(job_id: str, audio_path: str, video_paths: List[str], out_dir: str = "/app/outputs") -> dict:
+    os.makedirs(out_dir, exist_ok=True)
+    final = os.path.join(out_dir, f"{job_id}_final.mp4")
+    qa = os.path.join(out_dir, f"{job_id}_qa.json")
+    beats = _beats_from_audio(audio_path)
+    edl = make_edl(10.0, beats)
+    with tempfile.TemporaryDirectory() as tmp:
+        parts = _cut_to_parts(video_paths, edl, tmp)
+        _concat_with_audio(parts, audio_path, final)
+    meta = {"job_id": job_id, "beats_total": len(beats), "segments": edl, "final": final}
+    with open(qa,"w") as f:
+        json.dump(meta, f, indent=2)
+    return {"ok": True, "final": final, "qa": qa}

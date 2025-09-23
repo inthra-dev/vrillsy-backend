@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PATH="$PATH:/home/app/.local/bin"  # HOME_APP_LOCAL PYTHONUNBUFFERED=1
+WORKDIR /app
+
+# nie-root user
+RUN set -eux; \
+    groupadd -r app && useradd -r -g app -m app && \
+    chown -R app:app /app
+USER app
+
+# skrypty z pip --user do PATH
+ENV PATH="/home/app/.local/bin:${PATH}"
+
+# python deps
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# kod
+COPY backend/app /app/app
+
+# start
+CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","8000"]
