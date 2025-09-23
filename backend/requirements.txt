@@ -7,3 +7,5 @@ celery
 PyJWT
 email-validator
 PyYAML
+python-multipart
+pydantic-settings
