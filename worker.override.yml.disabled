@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OUTPUTS_DIR=/outputs
+      - SHARED_DIR=/shared
+      - TMPDIR=/app/tmp
+    volumes:
+      - ./shared:/shared
+      - ./outputs:/outputs
+      - ./tmp:/app/tmp

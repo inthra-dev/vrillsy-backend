@@ -1,0 +1,5 @@
+services:
+  worker:
+    environment:
+      NUMBA_CACHE_DIR: /tmp/numba_cache
+    entrypoint: ["/bin/sh","-lc","export NUMBA_CACHE_DIR=${NUMBA_CACHE_DIR:-/tmp/numba_cache}; mkdir -p \"$NUMBA_CACHE_DIR\" && chmod 777 \"$NUMBA_CACHE_DIR\"; exec celery -A app.celery_app:celery_app worker -l INFO -Q vrillsy"]

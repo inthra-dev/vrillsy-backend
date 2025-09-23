@@ -1,0 +1,103 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    container_name: reels-redis
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD","redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+
+  backend:
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reels-backend
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+    env_file: .env
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      OUTPUT_DIR: "/outputs"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+      VRS_DISABLE_AUTH: "1"
+    volumes:
+      - /home/akex/reels-generator/backend:/app
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+    ports: ["8080:8000"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: /home/akex/reels-generator/worker
+      dockerfile: Dockerfile
+    container_name: reels-worker
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+    env_file: .env
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      OUTPUT_DIR: "/outputs"
+    volumes:
+      - /home/akex/reels-generator/worker:/app
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: reels-frontend
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:8080"
+    ports: ["3000:3000"]
+    depends_on:
+      backend:
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      VRS_DISABLE_AUTH: "1"
+      FRONTEND_ORIGIN: "http://localhost:3000"
+        condition: service_started

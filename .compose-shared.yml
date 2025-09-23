@@ -1,0 +1,9 @@
+services:
+  backend:
+    volumes:
+      - ./shared:/shared
+      - ./outputs:/outputs
+  worker:
+    volumes:
+      - ./shared:/shared
+      - ./outputs:/outputs

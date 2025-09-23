@@ -1,0 +1,10 @@
+services:
+  worker:
+    environment:
+      - NUMBA_CACHE_DIR=/tmp/numba_cache
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - |
+        mkdir -p /tmp/numba_cache && chmod 777 /tmp/numba_cache
+        exec celery -A app.celery_app:celery_app worker -l INFO -Q vrillsy

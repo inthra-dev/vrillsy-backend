@@ -1,0 +1,13 @@
+services:
+  backend:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  worker:
+    restart: unless-stopped
+  redis:
+    restart: unless-stopped

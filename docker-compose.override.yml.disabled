@@ -1,0 +1,17 @@
+services:
+  worker:
+    image: reels-generator_backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -lc "celery -A celery_app worker
+              --loglevel=INFO
+              --concurrency=2
+              --queues=vrillsy"
+    environment:
+      - PYTHONPATH=/app:/app/app
+      - CELERY_APP=celery_app
+      - CELERY_IMPORTS=tasks.pro_render
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0

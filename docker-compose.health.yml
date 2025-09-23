@@ -1,0 +1,15 @@
+services:
+  backend:
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,json,sys; d=json.loads(urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2).read().decode()); sys.exit(0 if d.get('ok') else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+  worker:
+    healthcheck:
+      test: ["CMD-SHELL","sh -lc 'ps -ef | grep -v grep | grep -q celery'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

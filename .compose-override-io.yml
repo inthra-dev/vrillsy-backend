@@ -1,0 +1,6 @@
+services:
+  worker:
+    user: "1000:1000"
+    volumes:
+      - /home/akex/reels-generator/inputs:/app/inputs
+      - /home/akex/reels-generator/outputs:/app/outputs

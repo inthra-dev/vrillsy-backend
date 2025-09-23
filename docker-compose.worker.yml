@@ -1,0 +1,18 @@
+version: "3.9"
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - SHARED_DIR=/app/shared
+      - OUTPUTS_DIR=/app/outputs
+      - TMP_DIR=/app/tmp
+    volumes:
+      - ./shared:/app/shared:ro
+      - ./outputs:/app/outputs
+    depends_on:
+      - redis
+    restart: unless-stopped

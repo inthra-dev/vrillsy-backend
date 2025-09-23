@@ -1,0 +1,5 @@
+services:
+  worker:
+    volumes:
+      - ./worker/app:/app/app
+    command: ["celery","-A","app.celery_app","worker","--loglevel=INFO","--include","app.tasks_d41"]

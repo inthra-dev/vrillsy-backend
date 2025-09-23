@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    container_name: reels-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reels-backend
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      OUTPUT_DIR: /outputs
+      - /home/akex/reels-generator/backend:/app
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+    ports:
+      - "8080:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: reels-worker
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      OUTPUT_DIR: /outputs
+      - /home/akex/reels-generator/worker:/app
+      - /home/akex/reels-generator/shared:/shared
+      - /home/akex/reels-generator/outputs:/outputs
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: reels-frontend
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
