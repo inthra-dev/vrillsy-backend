@@ -1,6 +1,7 @@
-celery
 redis
-numpy
-scipy
+celery
+python-dotenv
+aubio
 librosa
-soundfile
+madmom
+ffmpeg-python
