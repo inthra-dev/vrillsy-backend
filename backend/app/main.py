@@ -1,8 +1,8 @@
 import os
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from .routers.generate import router as generate_router
-from .routers.status import router as status_router
+from routers.generate import router as generate_router
+from routers.status import router as status_router
 
 app = FastAPI(title="Vrillsy API")
 
