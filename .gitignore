@@ -2,3 +2,4 @@ secrets/
 inputs/
 outputs/
 temp/
+.venv

@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: vr-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: vrillsy-backend:local
+    container_name: vr-backend
+    environment:
+      - PORT=8000
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    ports:
+      - "8007:8000"
